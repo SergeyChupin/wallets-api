@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:14.1
+    environment:
+      POSTGRES_DB: "wallets"
+      POSTGRES_USER: "wallets_user"
+      POSTGRES_PASSWORD: "wallets_password"
+    volumes:
+      - ./.database/postgres/data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+  walelts-api:
+    build: ./
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_URL=postgres://wallets_user:wallets_password@postgres:5432/wallets?sslmode=disable

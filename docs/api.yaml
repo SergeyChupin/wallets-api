@@ -1,0 +1,262 @@
+basePath: /api/v1
+definitions:
+  CreateWalletRequest:
+    properties:
+      currency:
+        type: string
+        x-go-name: Currency
+      name:
+        type: string
+        x-go-name: Name
+    type: object
+    x-go-package: github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto
+  CreateWalletResponse:
+    properties:
+      id:
+        type: string
+        x-go-name: ID
+    type: object
+    x-go-package: github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto
+  DepositRequest:
+    properties:
+      amount:
+        format: uint64
+        type: integer
+        x-go-name: Amount
+    type: object
+    x-go-package: github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto
+  DepositResponse:
+    properties:
+      balance:
+        format: uint64
+        type: integer
+        x-go-name: Balance
+    type: object
+    x-go-package: github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto
+  ErrorResponse:
+    properties:
+      message:
+        type: string
+        x-go-name: Message
+    type: object
+    x-go-package: github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto
+  TransactionResponse:
+    properties:
+      amount:
+        format: uint64
+        type: integer
+        x-go-name: Amount
+      balance:
+        format: uint64
+        type: integer
+        x-go-name: Balance
+      operation_type:
+        type: string
+        x-go-name: OperationType
+      processed_at:
+        format: date-time
+        type: string
+        x-go-name: ProcessedAt
+      recipient_wallet_balance:
+        format: uint64
+        type: integer
+        x-go-name: RecipientWalletBalance
+      recipient_wallet_id:
+        type: string
+        x-go-name: RecipientWalletId
+      recipient_wallet_me:
+        type: boolean
+        x-go-name: RecipientWalletMe
+      sender_wallet_balance:
+        format: uint64
+        type: integer
+        x-go-name: SenderWalletBalance
+      sender_wallet_id:
+        type: string
+        x-go-name: SenderWalletId
+      sender_wallet_me:
+        type: boolean
+        x-go-name: SenderWalletMe
+    type: object
+    x-go-package: github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto
+  TransferRequest:
+    properties:
+      amount:
+        format: uint64
+        type: integer
+        x-go-name: Amount
+      sender_wallet_id:
+        type: string
+        x-go-name: SenderWalletId
+    type: object
+    x-go-package: github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto
+  TransferResponse:
+    properties:
+      balance:
+        format: uint64
+        type: integer
+        x-go-name: Balance
+      sender_wallet_balance:
+        format: uint64
+        type: integer
+        x-go-name: SenderWalletBalance
+    type: object
+    x-go-package: github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto
+info:
+  description: Documentation for Wallets API
+  title: Wallets API
+  version: 1.0.0
+paths:
+  /wallets:
+    post:
+      consumes:
+      - application/json
+      description: Create new wallet
+      operationId: createWallet
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/CreateWalletRequest'
+        x-go-name: Body
+      produces:
+      - application/json
+      responses:
+        "200":
+          $ref: '#/responses/createWalletResponse'
+        "400":
+          $ref: '#/responses/errorResponse'
+        "500":
+          $ref: '#/responses/errorResponse'
+      tags:
+      - WalletsAPI
+  /wallets/{id}/deposit:
+    post:
+      consumes:
+      - application/json
+      description: Deposit money to wallet
+      operationId: deposit
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/DepositRequest'
+        x-go-name: Body
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          $ref: '#/responses/depositResponse'
+        "400":
+          $ref: '#/responses/errorResponse'
+        "500":
+          $ref: '#/responses/errorResponse'
+      tags:
+      - WalletsAPI
+  /wallets/{id}/transactions:
+    get:
+      description: Return a list of transactions
+      operationId: getTransactions
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: ID
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: offset
+        type: integer
+        x-go-name: Offset
+      - in: query
+        name: operation_type
+        type: string
+        x-go-name: OperationType
+      - format: date-time
+        in: query
+        name: processed_at.gte
+        type: string
+        x-go-name: ProcessedAtGte
+      - format: date-time
+        in: query
+        name: processed_at.lte
+        type: string
+        x-go-name: ProcessedAtLte
+      produces:
+      - application/json
+      - text/csv
+      responses:
+        "200":
+          $ref: '#/responses/transactionsResponse'
+        "400":
+          $ref: '#/responses/errorResponse'
+        "406":
+          $ref: '#/responses/errorResponse'
+        "500":
+          $ref: '#/responses/errorResponse'
+      tags:
+      - WalletsAPI
+  /wallets/{id}/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Transfer money between wallets
+      operationId: transfer
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/TransferRequest'
+        x-go-name: Body
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          $ref: '#/responses/transferResponse'
+        "400":
+          $ref: '#/responses/errorResponse'
+        "500":
+          $ref: '#/responses/errorResponse'
+      tags:
+      - WalletsAPI
+responses:
+  createWalletResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/CreateWalletResponse'
+  depositResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/DepositResponse'
+  errorResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+  transactionsResponse:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/TransactionResponse'
+      type: array
+  transferResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/TransferResponse'
+schemes:
+- http
+swagger: "2.0"

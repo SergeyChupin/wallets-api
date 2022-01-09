@@ -1,0 +1,190 @@
+{
+	"info": {
+		"_postman_id": "5c7a4dad-d9a0-4b05-8609-c10f32f8e415",
+		"name": "Wallets API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create wallet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var id = pm.response.json().id;",
+							"pm.globals.set(\"wallet_id\", id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"usd_wallet\",\n    \"currency\": \"USD\"   \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/wallets",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"wallets"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Deposit wallet",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 100\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/wallets/{{wallet_id}}/deposit",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"wallets",
+						"{{wallet_id}}",
+						"deposit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Transfer money between wallets",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"sender_wallet_id\": \"149315ba-fcfb-42e8-a5a6-38289bdbade4\",\n    \"amount\": 100\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/wallets/{{wallet_id}}/transfer",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"wallets",
+						"{{wallet_id}}",
+						"transfer"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get transactions",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/csv",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/wallets/{{wallet_id}}/transactions?limit=-1&offset=-1&processed_at.gte=2022-01-10T00:00:00Z",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"wallets",
+						"{{wallet_id}}",
+						"transactions"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "-1"
+						},
+						{
+							"key": "offset",
+							"value": "-1"
+						},
+						{
+							"key": "operation_type",
+							"value": "deposit",
+							"disabled": true
+						},
+						{
+							"key": "processed_at.gte",
+							"value": "2022-01-10T00:00:00Z"
+						},
+						{
+							"key": "processed_at.lte",
+							"value": "2022-01-10T23:59:59Z",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/api/v1"
+		}
+	]
+}
