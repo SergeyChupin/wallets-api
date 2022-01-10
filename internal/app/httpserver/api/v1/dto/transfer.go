@@ -9,7 +9,7 @@ import (
 
 // swagger:model
 type TransferRequest struct {
-	Amount         uint64 `json:"amount" validate:"required"`
+	Amount         uint64 `json:"amount" validate:"required,gt=0"`
 	SenderWalletId string `json:"sender_wallet_id" validate:"required"`
 }
 

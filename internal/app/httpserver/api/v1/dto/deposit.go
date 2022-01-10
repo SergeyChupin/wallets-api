@@ -9,7 +9,7 @@ import (
 
 // swagger:model
 type DepositRequest struct {
-	Amount uint64 `json:"amount" validate:"required"`
+	Amount uint64 `json:"amount" validate:"required,gt=0"`
 }
 
 func (req *DepositRequest) FromJson(reader io.Reader) error {

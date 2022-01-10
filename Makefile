@@ -2,6 +2,10 @@
 build:
 	go build -v ./cmd/httpserver
 
+.PHONY: test
+test:
+	go test -v -race -timeout 30s ./...
+
 .PHONY: setup
 setup:
 	docker-compose up
