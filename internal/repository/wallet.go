@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -33,7 +34,7 @@ func (walletRepository *walletRepository) CreateWallet(wallet model.Wallet) (str
 		wallet.Currency,
 		0,
 	).Scan(&id); err != nil {
-		return "", err
+		return "", fmt.Errorf("WalletRepository - CreateWallet - walletRepository.db.QueryRow: %w", err)
 	}
 	return id, nil
 }
@@ -41,40 +42,36 @@ func (walletRepository *walletRepository) CreateWallet(wallet model.Wallet) (str
 func (walletRepository *walletRepository) Deposit(recipientWalletId string, amount uint64) (*model.Transaction, error) {
 	tx, err := walletRepository.db.Begin()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("WalletRepository - Deposit - walletRepository.db.Begin: %w", err)
 	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	now := time.Now().UTC()
 
 	var recipientWalletBalance uint64
-	if err := tx.QueryRow(
+	if err = tx.QueryRow(
 		"UPDATE wallets SET balance = balance + $1 WHERE id = $2 RETURNING balance",
 		amount,
 		recipientWalletId,
 	).Scan(&recipientWalletBalance); err != nil {
-		return nil, err
-	}
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
+		return nil, fmt.Errorf("WalletRepository - Deposit - tx.QueryRow: %w", err)
 	}
 
-	_, err = tx.Exec(
+	if _, err = tx.Exec(
 		"INSERT INTO transactions(operation_type, amount, recipient_wallet_id, recipient_wallet_balance, processed_at) VALUES($1, $2, $3, $4, $5)",
 		model.Deposit,
 		amount,
 		recipientWalletId,
 		recipientWalletBalance,
 		now,
-	)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
+	); err != nil {
+		return nil, fmt.Errorf("WalletRepository - Deposit - tx.Exec: %w", err)
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("WalletRepository - Deposit - tx.Commit: %w", err)
 	}
 
 	return &model.Transaction{
@@ -91,38 +88,33 @@ func (walletRepository *walletRepository) Deposit(recipientWalletId string, amou
 func (walletRepository *walletRepository) Transfer(senderWalletId string, recipientWalletId string, amount uint64) (*model.Transaction, error) {
 	tx, err := walletRepository.db.Begin()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("WalletRepository - Transfer - walletRepository.db.Begin: %w", err)
 	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	now := time.Now().UTC()
 
 	var senderWalletBalance uint64
-	if err := tx.QueryRow(
+	if err = tx.QueryRow(
 		"UPDATE wallets SET balance = balance - $1 WHERE id = $2 RETURNING balance",
 		amount,
 		senderWalletId,
 	).Scan(&senderWalletBalance); err != nil {
-		return nil, err
-	}
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
+		return nil, fmt.Errorf("WalletRepository - Transfer - tx.QueryRow: %w", err)
 	}
 
 	var recipientWalletBalance uint64
-	if err := tx.QueryRow(
+	if err = tx.QueryRow(
 		"UPDATE wallets SET balance = balance + $1 WHERE id = $2 RETURNING balance",
 		amount,
 		recipientWalletId,
 	).Scan(&recipientWalletBalance); err != nil {
-		return nil, err
-	}
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
+		return nil, fmt.Errorf("WalletRepository - Transfer - tx.QueryRow: %w", err)
 	}
 
-	_, err = tx.Exec(
+	if _, err = tx.Exec(
 		"INSERT INTO transactions(operation_type, amount, sender_wallet_id, sender_wallet_balance, recipient_wallet_id, recipient_wallet_balance, processed_at) VALUES($1, $2, $3, $4, $5, $6, $7)",
 		model.Transfer,
 		amount,
@@ -131,15 +123,12 @@ func (walletRepository *walletRepository) Transfer(senderWalletId string, recipi
 		recipientWalletId,
 		recipientWalletBalance,
 		now,
-	)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
+	); err != nil {
+		return nil, fmt.Errorf("WalletRepository - Transfer - tx.Exec: %w", err)
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("WalletRepository - Transfer - tx.Commit: %w", err)
 	}
 
 	return &model.Transaction{
@@ -197,7 +186,7 @@ func (walletRepository *walletRepository) GetTransactions(limit int, offset int,
 		query, filterValues...,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("WalletRepository - GetTransactions - walletRepository.db.Query: %w", err)
 	}
 	defer func() {
 		_ = rows.Close()
@@ -206,7 +195,7 @@ func (walletRepository *walletRepository) GetTransactions(limit int, offset int,
 	var transactions []*model.Transaction
 	for rows.Next() {
 		transactionEntity := transaction{}
-		err := rows.Scan(
+		if err = rows.Scan(
 			&transactionEntity.operationType,
 			&transactionEntity.amount,
 			&transactionEntity.senderWalletId,
@@ -214,13 +203,12 @@ func (walletRepository *walletRepository) GetTransactions(limit int, offset int,
 			&transactionEntity.recipientWalletId,
 			&transactionEntity.recipientWalletBalance,
 			&transactionEntity.processedAt,
-		)
-		if err != nil {
-			return nil, err
+		); err != nil {
+			return nil, fmt.Errorf("WalletRepository - GetTransactions - rows.Scan: %w", err)
 		}
 		operationType, err := model.FromString(transactionEntity.operationType)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("WalletRepository - GetTransactions - model.FromString: %w", err)
 		}
 		transaction := new(model.Transaction)
 		transaction.Amount = transactionEntity.amount
@@ -231,7 +219,7 @@ func (walletRepository *walletRepository) GetTransactions(limit int, offset int,
 		if transactionEntity.senderWalletBalance.Valid {
 			senderWalletBalance, err := strconv.ParseUint(transactionEntity.senderWalletBalance.String, 10, 64)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("WalletRepository - GetTransactions - strconv.ParseUint: %w", err)
 			}
 			transaction.SenderWallet = &model.Wallet{
 				ID:      transactionEntity.senderWalletId.String,
@@ -242,5 +230,9 @@ func (walletRepository *walletRepository) GetTransactions(limit int, offset int,
 	}
 
 	err = rows.Err()
-	return transactions, err
+	if err != nil {
+		return nil, fmt.Errorf("WalletRepository - GetTransactions - rows.Err: %w", err)
+	}
+
+	return transactions, nil
 }

@@ -1,7 +1,7 @@
 package model
 
 import (
-	"errors"
+	"fmt"
 	"time"
 )
 
@@ -26,7 +26,7 @@ func FromString(value string) (OperationType, error) {
 	case Transfer.value:
 		return Transfer, nil
 	}
-	return UnknownOperation, errors.New("unknown operation type")
+	return UnknownOperation, fmt.Errorf("unknown operation type: %s", value)
 }
 
 type Transaction struct {

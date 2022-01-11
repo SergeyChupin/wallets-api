@@ -46,13 +46,13 @@ func (walletsApi *walletsApi) CreateWallet(rw http.ResponseWriter, req *http.Req
 	var reqData dto.CreateWalletRequest
 	err := reqData.FromJson(req.Body)
 	if err != nil {
-		walletsApi.logger.Println(err)
-		writeError(rw, "unable to decode json", http.StatusBadRequest)
+		walletsApi.logger.Println("walletsApi - CreateWallet - reqData.FromJson:", err)
+		writeError(rw, "invalid request body", http.StatusBadRequest)
 		return
 	}
-	if err := reqData.Validate(); err != nil {
-		walletsApi.logger.Println(err)
-		writeError(rw, "invalid json values", http.StatusBadRequest)
+	if err = reqData.Validate(); err != nil {
+		walletsApi.logger.Println("walletsApi - CreateWallet - reqData.Validate:", err)
+		writeError(rw, "invalid request body", http.StatusBadRequest)
 		return
 	}
 	id, err := walletsApi.walletService.CreateWallet(
@@ -62,14 +62,14 @@ func (walletsApi *walletsApi) CreateWallet(rw http.ResponseWriter, req *http.Req
 		},
 	)
 	if err != nil {
-		walletsApi.logger.Println(err)
+		walletsApi.logger.Println("walletsApi - CreateWallet - walletsApi.walletService.CreateWallet:", err)
 		writeError(rw, "unable to create wallet", http.StatusInternalServerError)
 		return
 	}
 	respData := dto.CreateWalletResponse{ID: id}
-	if err := respData.ToJson(rw); err != nil {
-		walletsApi.logger.Println(err)
-		writeError(rw, "unable to encode json", http.StatusInternalServerError)
+	if err = respData.ToJson(rw); err != nil {
+		walletsApi.logger.Println("walletsApi - CreateWallet - respData.ToJson:", err)
+		writeError(rw, "internal error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -90,29 +90,28 @@ func (walletsApi *walletsApi) Deposit(rw http.ResponseWriter, req *http.Request)
 	rw.Header().Set("Content-Type", "application/json")
 	id := getWalletId(req)
 	var reqData dto.DepositRequest
-	err := reqData.FromJson(req.Body)
-	if err != nil {
-		walletsApi.logger.Println(err)
-		writeError(rw, "unable to decode json", http.StatusBadRequest)
+	if err := reqData.FromJson(req.Body); err != nil {
+		walletsApi.logger.Println("walletsApi - Deposit - reqData.FromJson:", err)
+		writeError(rw, "invalid request body", http.StatusBadRequest)
 		return
 	}
 	if err := reqData.Validate(); err != nil {
-		walletsApi.logger.Println(err)
-		writeError(rw, "invalid json values", http.StatusBadRequest)
+		walletsApi.logger.Println("walletsApi - Deposit - reqData.Validate:", err)
+		writeError(rw, "invalid request body", http.StatusBadRequest)
 		return
 	}
 	depositTransaction, err := walletsApi.walletService.Deposit(
 		id, reqData.Amount,
 	)
 	if err != nil {
-		walletsApi.logger.Println(err)
+		walletsApi.logger.Println("walletsApi - Deposit - walletsApi.walletService.Deposit:", err)
 		writeError(rw, "unable to deposit wallet", http.StatusInternalServerError)
 		return
 	}
 	respData := dto.DepositResponse{Balance: depositTransaction.RecipientWallet.Balance}
-	if err := respData.ToJson(rw); err != nil {
-		walletsApi.logger.Println(err)
-		writeError(rw, "unable to encode json", http.StatusInternalServerError)
+	if err = respData.ToJson(rw); err != nil {
+		walletsApi.logger.Println("walletsApi - Deposit - respData.ToJson:", err)
+		writeError(rw, "internal error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -133,22 +132,21 @@ func (walletsApi *walletsApi) Transfer(rw http.ResponseWriter, req *http.Request
 	rw.Header().Set("Content-Type", "application/json")
 	id := getWalletId(req)
 	var reqData dto.TransferRequest
-	err := reqData.FromJson(req.Body)
-	if err != nil {
-		walletsApi.logger.Println(err)
-		writeError(rw, "unable to decode json", http.StatusBadRequest)
+	if err := reqData.FromJson(req.Body); err != nil {
+		walletsApi.logger.Println("walletsApi - Transfer - reqData.FromJson:", err)
+		writeError(rw, "invalid request body", http.StatusBadRequest)
 		return
 	}
 	if err := reqData.Validate(); err != nil {
-		walletsApi.logger.Println(err)
-		writeError(rw, "invalid json values", http.StatusBadRequest)
+		walletsApi.logger.Println("walletsApi - Transfer - reqData.Validate:", err)
+		writeError(rw, "invalid request body", http.StatusBadRequest)
 		return
 	}
 	transferTransaction, err := walletsApi.walletService.Transfer(
 		reqData.SenderWalletId, id, reqData.Amount,
 	)
 	if err != nil {
-		walletsApi.logger.Println(err)
+		walletsApi.logger.Println("walletsApi - Transfer - walletsApi.walletService.Transfer:", err)
 		writeError(rw, "unable to transfer money between wallets", http.StatusInternalServerError)
 		return
 	}
@@ -156,8 +154,9 @@ func (walletsApi *walletsApi) Transfer(rw http.ResponseWriter, req *http.Request
 		SenderWalletBalance: transferTransaction.SenderWallet.Balance,
 		Balance:             transferTransaction.RecipientWallet.Balance,
 	}
-	if err := respData.ToJson(rw); err != nil {
-		writeError(rw, "unable to encode json", http.StatusInternalServerError)
+	if err = respData.ToJson(rw); err != nil {
+		walletsApi.logger.Println("walletsApi - Transfer - respData.ToJson:", err)
+		writeError(rw, "internal error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -180,15 +179,15 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 		contentType = "application/json"
 	}
 	if contentType != "application/json" && contentType != "text/csv" {
-		walletsApi.logger.Println("unsupported content type")
-		writeError(rw, "unsupported content type", http.StatusNotAcceptable)
+		walletsApi.logger.Println("walletsApi - GetTransactions - invalid header 'Accept'")
+		writeError(rw, "invalid header 'Accept'", http.StatusNotAcceptable)
 		return
 	}
 	rw.Header().Set("Content-Type", contentType)
 	id := getWalletId(req)
 	limit, offset, err := getPagination(req)
 	if err != nil {
-		walletsApi.logger.Println(err)
+		walletsApi.logger.Println("walletsApi - GetTransactions - getPagination:", err)
 		writeError(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -199,8 +198,8 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 	if operationType != "" {
 		operationType, err := model.FromString(operationType)
 		if err != nil {
-			walletsApi.logger.Println(err)
-			writeError(rw, err.Error(), http.StatusBadRequest)
+			walletsApi.logger.Println("walletsApi - GetTransactions - model.FromString:", err)
+			writeError(rw, "invalid query parameter operation_type", http.StatusBadRequest)
 			return
 		}
 		filter.OperationType = operationType
@@ -209,8 +208,8 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 	if processedAtGte != "" {
 		processedAtGte, err := time.Parse(time.RFC3339Nano, processedAtGte)
 		if err != nil {
-			walletsApi.logger.Println(err)
-			writeError(rw, "processed_at.gte query parameter is not valid", http.StatusBadRequest)
+			walletsApi.logger.Println("walletsApi - GetTransactions - time.Parse:", err)
+			writeError(rw, "invalid query parameter processed_at.gte", http.StatusBadRequest)
 			return
 		}
 		filter.ProcessedAtGte = processedAtGte
@@ -219,22 +218,22 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 	if processedAtLte != "" {
 		processedAtLte, err := time.Parse(time.RFC3339Nano, processedAtLte)
 		if err != nil {
-			walletsApi.logger.Println(err)
-			writeError(rw, "processed_at.lte query parameter is not valid", http.StatusBadRequest)
+			walletsApi.logger.Println("walletsApi - GetTransactions - time.Parse:", err)
+			writeError(rw, "invalid query parameter processed_at.lte", http.StatusBadRequest)
 			return
 		}
 		filter.ProcessedAtLte = processedAtLte
 	}
 	if !filter.ProcessedAtLte.IsZero() && !filter.ProcessedAtGte.Before(filter.ProcessedAtLte) {
-		walletsApi.logger.Println("processed_at.gte query parameter should be before processed_at.lte")
-		writeError(rw, "processed_at.gte query parameter should be before processed_at.lte", http.StatusBadRequest)
+		walletsApi.logger.Println("walletsApi - GetTransactions - invalid time range processed_at")
+		writeError(rw, "invalid time range processed_at", http.StatusBadRequest)
 		return
 	}
 	transactions, err := walletsApi.walletService.GetTransactions(
 		limit, offset, filter,
 	)
 	if err != nil {
-		walletsApi.logger.Println(err)
+		walletsApi.logger.Println("walletsApi - GetTransactions - walletsApi.walletService.GetTransactions:", err)
 		writeError(rw, "unable to get transactions", http.StatusInternalServerError)
 		return
 	}
@@ -262,16 +261,16 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 		respData = append(respData, respItem)
 	}
 	if contentType == "application/json" {
-		if err := respData.ToJson(rw); err != nil {
-			walletsApi.logger.Println(err)
-			writeError(rw, "unable to encode json", http.StatusInternalServerError)
+		if err = respData.ToJson(rw); err != nil {
+			walletsApi.logger.Println("walletsApi - GetTransactions - respData.ToJson:", err)
+			writeError(rw, "internal error", http.StatusInternalServerError)
 			return
 		}
 	}
 	if contentType == "text/csv" {
-		if err := respData.ToCsv(rw); err != nil {
-			walletsApi.logger.Println(err)
-			writeError(rw, "unable to write csv", http.StatusInternalServerError)
+		if err = respData.ToCsv(rw); err != nil {
+			walletsApi.logger.Println("walletsApi - GetTransactions - respData.ToCsv:", err)
+			writeError(rw, "internal error", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -296,7 +295,7 @@ func getPagination(req *http.Request) (pageLimit int, pageOffset int, err error)
 	if limit != "" {
 		pageLimit, err = strconv.Atoi(limit)
 		if err != nil || pageLimit < -1 {
-			err = errors.New("limit query parameter is not valid")
+			err = errors.New("invalid limit query parameter")
 			return
 		}
 	}
@@ -304,7 +303,7 @@ func getPagination(req *http.Request) (pageLimit int, pageOffset int, err error)
 	if offset != "" {
 		pageOffset, err = strconv.Atoi(offset)
 		if err != nil || pageOffset < -1 {
-			err = errors.New("offset query parameter is not valid")
+			err = errors.New("invalid offset query parameter")
 			return
 		}
 	}

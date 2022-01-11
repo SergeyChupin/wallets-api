@@ -118,7 +118,7 @@ func TestCreateWalletCurrencyValidation(t *testing.T) {
 	if err := json.Unmarshal(recorder.Body.Bytes(), respBody); err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, "invalid json values", respBody.Message)
+	assert.Equal(t, "invalid request body", respBody.Message)
 
 	walletService.AssertNumberOfCalls(t, "CreateWallet", 0)
 	walletService.AssertExpectations(t)

@@ -17,12 +17,12 @@ func Run(configPath string) {
 	logger := log.New(os.Stdout, "wallets-api ", log.LstdFlags)
 
 	configLoader := config.NewLoader(configPath)
-	configuration, err := configLoader.Load()
+	cfg, err := configLoader.Load()
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	db, err := postgres.Open(configuration.Postgres)
+	db, err := postgres.Open(logger, cfg.Postgres)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func Run(configPath string) {
 	walletService := service.NewWalletService(walletRepository)
 
 	handler := api.NewHandler(logger, walletService)
-	srv := server.NewServer(logger, configuration.Server, handler)
+	srv := server.NewServer(logger, cfg.Server, handler)
 
 	go func() {
 		if err := srv.Start(); err != nil {

@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/validation"
 	"github.com/go-playground/validator/v10"
 )
 
 // swagger:model
 type CreateWalletRequest struct {
 	Name     string `json:"name" validate:"required"`
-	Currency string `json:"currency" validate:"required,currency"`
+	Currency string `json:"currency" validate:"required,oneof=USD"`
 }
 
 func (req *CreateWalletRequest) FromJson(reader io.Reader) error {
@@ -21,9 +20,6 @@ func (req *CreateWalletRequest) FromJson(reader io.Reader) error {
 
 func (req *CreateWalletRequest) Validate() error {
 	validate := validator.New()
-	if err := validate.RegisterValidation("currency", validation.CurrencyValidator); err != nil {
-		return err
-	}
 	return validate.Struct(req)
 }
 
