@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   postgres:
+    container_name: postgres
     image: postgres:14.1
     environment:
       POSTGRES_DB: "wallets"
@@ -12,8 +13,10 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
-  walelts-api:
-    build: ./
+  httpserver:
+    build: .
+    container_name: httpserver
+    image: httpserver
     ports:
       - "8080:8080"
     depends_on:

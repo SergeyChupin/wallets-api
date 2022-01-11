@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/model"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/service"
+	"github.com/SergeyChupin/wallets-api/internal/model"
+	"github.com/SergeyChupin/wallets-api/internal/service"
 	"github.com/gorilla/mux"
 )
 
@@ -18,11 +18,15 @@ type walletsApi struct {
 	walletService service.WalletService
 }
 
-func NewWalletsApi(logger *log.Logger, walletService service.WalletService) *walletsApi {
-	return &walletsApi{
+func NewWalletsApi(logger *log.Logger, router *mux.Router, walletService service.WalletService) {
+	walletsApi := &walletsApi{
 		logger:        logger,
 		walletService: walletService,
 	}
+	router.HandleFunc("/wallets", walletsApi.CreateWallet).Methods(http.MethodPost)
+	router.HandleFunc("/wallets/{id}/deposit", walletsApi.Deposit).Methods(http.MethodPost)
+	router.HandleFunc("/wallets/{id}/transfer", walletsApi.Transfer).Methods(http.MethodPost)
+	router.HandleFunc("/wallets/{id}/transactions", walletsApi.GetTransactions).Methods(http.MethodGet)
 }
 
 // swagger:route POST /wallets WalletsAPI createWallet
@@ -176,7 +180,7 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 		contentType = "application/json"
 	}
 	if contentType != "application/json" && contentType != "text/csv" {
-		walletsApi.logger.Println("ERROR: unsupported content type")
+		walletsApi.logger.Println("unsupported content type")
 		writeError(rw, "unsupported content type", http.StatusNotAcceptable)
 		return
 	}
@@ -222,7 +226,7 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 		filter.ProcessedAtLte = processedAtLte
 	}
 	if !filter.ProcessedAtLte.IsZero() && !filter.ProcessedAtGte.Before(filter.ProcessedAtLte) {
-		walletsApi.logger.Println("ERROR: processed_at.gte query parameter should be before processed_at.lte")
+		walletsApi.logger.Println("processed_at.gte query parameter should be before processed_at.lte")
 		writeError(rw, "processed_at.gte query parameter should be before processed_at.lte", http.StatusBadRequest)
 		return
 	}
@@ -234,7 +238,7 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 		writeError(rw, "unable to get transactions", http.StatusInternalServerError)
 		return
 	}
-	var respData dto.TransactionsResponse = make([]*dto.TransactionResponse, 0)
+	var respData dto.TransactionsResponse = make([]*dto.TransactionResponse, 0, len(transactions))
 	for _, transaction := range transactions {
 		respItem := &dto.TransactionResponse{
 			OperationType: transaction.OperationType.String(),
@@ -255,9 +259,7 @@ func (walletsApi *walletsApi) GetTransactions(rw http.ResponseWriter, req *http.
 				respItem.SenderWalletBalance = &transaction.SenderWallet.Balance
 			}
 		}
-		respData = append(
-			respData, respItem,
-		)
+		respData = append(respData, respItem)
 	}
 	if contentType == "application/json" {
 		if err := respData.ToJson(rw); err != nil {

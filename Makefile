@@ -4,11 +4,18 @@ build:
 
 .PHONY: test
 test:
-	go test -v -race -timeout 30s ./...
+	go test -v -cover -race -timeout 30s ./internal/...
 
-.PHONY: setup
-setup:
-	docker-compose up
+.PHONY: compose-up
+compose-up:
+	docker-compose up --build -d
+
+compose-logs:
+	docker-compose logs -f
+
+.PHONY: compose-down
+compose-down:
+	docker-compose down --remove-orphans
 
 .PHONY: check-swagger
 check-swagger:

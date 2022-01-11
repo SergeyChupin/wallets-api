@@ -7,10 +7,10 @@ import (
 
 	"github.com/SergeyChupin/wallets-api/internal/app/httpserver/api"
 	"github.com/SergeyChupin/wallets-api/internal/app/httpserver/config"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/database/postgres"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/repository"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/server"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/service"
+	"github.com/SergeyChupin/wallets-api/internal/database/postgres"
+	"github.com/SergeyChupin/wallets-api/internal/repository"
+	"github.com/SergeyChupin/wallets-api/internal/server"
+	"github.com/SergeyChupin/wallets-api/internal/service"
 )
 
 func Run(configPath string) {
@@ -26,6 +26,9 @@ func Run(configPath string) {
 	if err != nil {
 		logger.Fatal(err)
 	}
+	defer func() {
+		_ = db.Close()
+	}()
 
 	walletRepository := repository.NewWalletRepository(db)
 	walletService := service.NewWalletService(walletRepository)
@@ -42,9 +45,6 @@ func Run(configPath string) {
 	}()
 
 	if err := srv.GracefulShutdown(); err != nil {
-		logger.Fatal(err)
-	}
-	if err := db.Close(); err != nil {
 		logger.Fatal(err)
 	}
 }

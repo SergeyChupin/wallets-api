@@ -1,7 +1,7 @@
 package postgres
 
 type Config struct {
-	Url string `mapstructure:"url"`
+	Url string `yaml:"url" env:"POSTGRES_URL"`
 }
 
 func NewConfig() Config {

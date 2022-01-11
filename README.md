@@ -10,9 +10,19 @@
 
 Для запуска потребуется установленный docker!
 
+Запуск:
 ```bash
-$ ./make setup
+$ ./make compose-up
 ```
+
+Остановка:
+```bash
+$ ./make compose-down
+```
+
+Сервис будет доступен по адресу http://localhost:8080
+
+API: http://localhost:8080/api/v1
 
 ## Хранилище
 

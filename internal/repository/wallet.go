@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/model"
+	"github.com/SergeyChupin/wallets-api/internal/model"
 )
 
 type WalletRepository interface {

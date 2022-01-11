@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/service"
+	"github.com/SergeyChupin/wallets-api/internal/service"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
 )
@@ -30,13 +30,9 @@ func (handler *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (handler *handler) initRoutes(walletService service.WalletService) {
 	router := mux.NewRouter()
 
-	walletsApi := v1.NewWalletsApi(handler.logger, walletService)
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 
-	walletRouter := router.PathPrefix("/api/v1/wallets").Subrouter()
-	walletRouter.HandleFunc("", walletsApi.CreateWallet).Methods(http.MethodPost)
-	walletRouter.HandleFunc("/{id}/deposit", walletsApi.Deposit).Methods(http.MethodPost)
-	walletRouter.HandleFunc("/{id}/transfer", walletsApi.Transfer).Methods(http.MethodPost)
-	walletRouter.HandleFunc("/{id}/transactions", walletsApi.GetTransactions).Methods(http.MethodGet)
+	v1.NewWalletsApi(handler.logger, apiRouter, walletService)
 
 	redocOpts := middleware.RedocOpts{SpecURL: "/api.yaml"}
 	redocHandler := middleware.Redoc(redocOpts, nil)

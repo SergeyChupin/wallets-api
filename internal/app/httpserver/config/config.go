@@ -1,13 +1,13 @@
 package config
 
 import (
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/database/postgres"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/server"
+	"github.com/SergeyChupin/wallets-api/internal/database/postgres"
+	"github.com/SergeyChupin/wallets-api/internal/server"
 )
 
 type Config struct {
-	Server   server.Config   `mapstructure:"server"`
-	Postgres postgres.Config `mapstructure:"postgres"`
+	Server   server.Config   `yaml:"server"`
+	Postgres postgres.Config `yaml:"postgres"`
 }
 
 func NewConfig() *Config {

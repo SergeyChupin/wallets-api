@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/SergeyChupin/wallets-api/internal/app/httpserver/api/v1/dto"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/model"
+	"github.com/SergeyChupin/wallets-api/internal/model"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -48,7 +48,6 @@ func (walletService *walletServiceMock) GetTransactions(limit int, offset int, f
 func TestCreateWallet(t *testing.T) {
 	// given
 	walletService := new(walletServiceMock)
-	api := NewWalletsApi(logger, walletService)
 
 	reqBody := dto.CreateWalletRequest{
 		Name:     "wallet",
@@ -59,8 +58,8 @@ func TestCreateWallet(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/wallets", api.CreateWallet).Methods(http.MethodPost)
-	req, err := http.NewRequest("POST", "/api/v1/wallets", reqBodyBuf)
+	NewWalletsApi(logger, router, walletService)
+	req, err := http.NewRequest("POST", "/wallets", reqBodyBuf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +90,6 @@ func TestCreateWallet(t *testing.T) {
 func TestCreateWalletCurrencyValidation(t *testing.T) {
 	// given
 	walletService := new(walletServiceMock)
-	api := NewWalletsApi(logger, walletService)
 
 	reqBody := dto.CreateWalletRequest{
 		Name:     "wallet",
@@ -102,8 +100,8 @@ func TestCreateWalletCurrencyValidation(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/wallets", api.CreateWallet).Methods(http.MethodPost)
-	req, err := http.NewRequest("POST", "/api/v1/wallets", reqBodyBuf)
+	NewWalletsApi(logger, router, walletService)
+	req, err := http.NewRequest("POST", "/wallets", reqBodyBuf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +127,6 @@ func TestCreateWalletCurrencyValidation(t *testing.T) {
 func TestDeposit(t *testing.T) {
 	// given
 	walletService := new(walletServiceMock)
-	api := NewWalletsApi(logger, walletService)
 
 	reqBody := dto.DepositRequest{
 		Amount: 10000,
@@ -139,8 +136,8 @@ func TestDeposit(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/wallets/{id}/deposit", api.Deposit).Methods(http.MethodPost)
-	req, err := http.NewRequest("POST", "/api/v1/wallets/1001/deposit", reqBodyBuf)
+	NewWalletsApi(logger, router, walletService)
+	req, err := http.NewRequest("POST", "/wallets/1001/deposit", reqBodyBuf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +177,6 @@ func TestDeposit(t *testing.T) {
 func TestTransfer(t *testing.T) {
 	// given
 	walletService := new(walletServiceMock)
-	api := NewWalletsApi(logger, walletService)
 
 	reqBody := dto.TransferRequest{
 		Amount:         10000,
@@ -191,8 +187,8 @@ func TestTransfer(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/wallets/{id}/transfer", api.Transfer).Methods(http.MethodPost)
-	req, err := http.NewRequest("POST", "/api/v1/wallets/1001/transfer", reqBodyBuf)
+	NewWalletsApi(logger, router, walletService)
+	req, err := http.NewRequest("POST", "/wallets/1001/transfer", reqBodyBuf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,13 +233,12 @@ func TestTransfer(t *testing.T) {
 func TestGetDepositTransactionsJson(t *testing.T) {
 	// given
 	walletService := new(walletServiceMock)
-	api := NewWalletsApi(logger, walletService)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/wallets/{id}/transactions", api.GetTransactions).Methods(http.MethodGet)
+	NewWalletsApi(logger, router, walletService)
 	req, err := http.NewRequest(
 		"GET",
-		"/api/v1/wallets/1001/transactions?limit=10&offset=0&operation_type=deposit&processed_at.gte=2022-01-10T00:00:00Z&processed_at.lte=2022-01-10T23:59:59Z",
+		"/wallets/1001/transactions?limit=10&offset=0&operation_type=deposit&processed_at.gte=2022-01-10T00:00:00Z&processed_at.lte=2022-01-10T23:59:59Z",
 		nil,
 	)
 	if err != nil {
@@ -309,13 +304,12 @@ func TestGetDepositTransactionsJson(t *testing.T) {
 func TestGetTransferTransactionsJson(t *testing.T) {
 	// given
 	walletService := new(walletServiceMock)
-	api := NewWalletsApi(logger, walletService)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/api/v1/wallets/{id}/transactions", api.GetTransactions).Methods(http.MethodGet)
+	NewWalletsApi(logger, router, walletService)
 	req, err := http.NewRequest(
 		"GET",
-		"/api/v1/wallets/1001/transactions?limit=10&offset=0&operation_type=transfer&processed_at.gte=2022-01-10T00:00:00Z&processed_at.lte=2022-01-10T23:59:59Z",
+		"/wallets/1001/transactions?limit=10&offset=0&operation_type=transfer&processed_at.gte=2022-01-10T00:00:00Z&processed_at.lte=2022-01-10T23:59:59Z",
 		nil,
 	)
 	if err != nil {

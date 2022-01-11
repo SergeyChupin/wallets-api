@@ -3,8 +3,8 @@ package service
 import (
 	"errors"
 
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/model"
-	"github.com/SergeyChupin/wallets-api/internal/app/pkg/repository"
+	"github.com/SergeyChupin/wallets-api/internal/model"
+	"github.com/SergeyChupin/wallets-api/internal/repository"
 )
 
 type WalletService interface {

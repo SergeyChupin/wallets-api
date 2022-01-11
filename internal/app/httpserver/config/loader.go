@@ -1,6 +1,8 @@
 package config
 
-import "github.com/SergeyChupin/wallets-api/internal/app/pkg/config"
+import (
+	"github.com/ilyakaznacheev/cleanenv"
+)
 
 type loader struct {
 	configPath string
@@ -13,12 +15,12 @@ func NewLoader(configPath string) *loader {
 }
 
 func (configLoader *loader) Load() (*Config, error) {
-	if err := config.Load(configLoader.configPath); err != nil {
+	cfg := NewConfig()
+
+	err := cleanenv.ReadConfig(configLoader.configPath, cfg)
+	if err != nil {
 		return nil, err
 	}
-	configuration := NewConfig()
-	if err := config.Unmarshal(configuration); err != nil {
-		return nil, err
-	}
-	return configuration, nil
+
+	return cfg, nil
 }
